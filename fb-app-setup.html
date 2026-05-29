@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FB App 設定流程 · hermes agent .env</title>
+  <style>
+    :root[data-theme="dark"] {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --surface2:#0f1720;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --green:   #3fb950;
+      --blue:    #58a6ff;
+      --orange:  #ff7b72;
+      --yellow:  #d29922;
+      --purple:  #bc8cff;
+      --accent:  #5fcf80;
+      --hero-bg: linear-gradient(135deg, #0d2818 0%, #0d1117 60%);
+      --hero-border: #1a3a24;
+      --code-bg: #010409;
+      --row-alt: rgba(255,255,255,0.02);
+      --hover-bg: rgba(255,255,255,0.04);
+    }
+    :root[data-theme="light"] {
+      --bg:      #f8fafc;
+      --surface: #ffffff;
+      --surface2:#f1f5f9;
+      --border:  #dbe3ed;
+      --text:    #142033;
+      --muted:   #5f6f83;
+      --green:   #16803a;
+      --blue:    #2563eb;
+      --orange:  #c2410c;
+      --yellow:  #a16207;
+      --purple:  #7c3aed;
+      --accent:  #15803d;
+      --hero-bg: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);
+      --hero-border: #bbf7d0;
+      --code-bg: #f8fafc;
+      --row-alt: rgba(15,23,42,0.035);
+      --hover-bg: rgba(15,23,42,0.055);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC',
+                   'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    body.nav-open { overflow: hidden; }
+    button, a { touch-action: manipulation; }
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    /* ── Mobile bar / theme btn ── */
+    .mobile-bar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      min-height: 58px;
+      padding: 7px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      gap: 10px;
+    }
+    .mobile-title {
+      min-width: 0;
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.3;
+    }
+    .icon-btn {
+      min-width: 44px;
+      min-height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .theme-btn {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 110;
+    }
+    .mobile-bar .theme-btn { position: static; flex-shrink: 0; }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 58px 0 0;
+      z-index: 80;
+      background: rgba(0,0,0,0.45);
+    }
+    .sidebar-overlay.open { display: block; }
+
+    /* ── Layout ── */
+    .layout { display: flex; width: 100%; min-height: 100vh; }
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 0;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #5fcf80, #3fb950);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .sidebar-logo-text { font-size: 13px; font-weight: 600; color: var(--text); }
+    .sidebar-logo-sub  { font-size: 11px; color: var(--muted); }
+    .sidebar nav a {
+      display: flex; align-items: center; gap: 8px;
+      min-height: 36px;
+      padding: 7px 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .sidebar nav a:hover { color: var(--text); background: var(--hover-bg); }
+    .sidebar nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(95,207,128,0.08); }
+    .sidebar nav .section-title {
+      padding: 12px 20px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .sidebar nav .step-num {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .main { flex: 1; min-width: 0; padding: 40px 48px; max-width: 960px; }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--hero-bg);
+      border: 1px solid var(--hero-border);
+      border-radius: 12px;
+      padding: 36px 40px;
+      margin-bottom: 40px;
+    }
+    .hero h1 { font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+    .hero p { color: var(--muted); font-size: 14px; }
+    .hero-meta { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 500;
+    }
+    .tag-green  { background: rgba(63,185,80,0.15);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+    .tag-blue   { background: rgba(88,166,255,0.15); color: var(--blue);   border: 1px solid rgba(88,166,255,0.3); }
+    .tag-orange { background: rgba(255,123,114,0.15); color: var(--orange); border: 1px solid rgba(255,123,114,0.3); }
+    :root[data-theme="light"] .tag-green  { background: rgba(22,128,58,0.1);  border-color: rgba(22,128,58,0.3); }
+    :root[data-theme="light"] .tag-blue   { background: rgba(37,99,235,0.1);  border-color: rgba(37,99,235,0.3); }
+    :root[data-theme="light"] .tag-orange { background: rgba(194,65,12,0.1);  border-color: rgba(194,65,12,0.3); }
+
+    /* ── Flow diagram ── */
+    .flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 28px 32px;
+      margin-bottom: 40px;
+    }
+    .flow h2 { font-size: 16px; color: var(--muted); margin-bottom: 20px; letter-spacing: 0.04em; }
+    .flow-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 0; }
+    .flow-step {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      gap: 8px; min-width: 110px; flex: 1;
+    }
+    .flow-step-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .flow-step-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .flow-step-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .flow-arrow { color: var(--border); font-size: 20px; padding: 0 4px; flex-shrink: 0; }
+    .icon-fb     { background: rgba(88,166,255,0.15); }
+    .icon-token  { background: rgba(255,123,114,0.15); }
+    .icon-script { background: rgba(188,140,255,0.15); }
+    .icon-env    { background: rgba(95,207,128,0.15); }
+    .icon-deploy { background: rgba(210,153,34,0.15); }
+
+    /* ── Section ── */
+    .section { margin-bottom: 56px; }
+    .section-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-num {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .num-blue   { background: rgba(88,166,255,0.2);  color: var(--blue); }
+    .num-orange { background: rgba(255,123,114,0.2); color: var(--orange); }
+    .num-purple { background: rgba(188,140,255,0.2); color: var(--purple); }
+    .num-green  { background: rgba(95,207,128,0.2);  color: var(--accent); }
+    .num-yellow { background: rgba(210,153,34,0.2);  color: var(--yellow); }
+    .num-red    { background: rgba(255,94,58,0.2);   color: #ff5e3a; }
+    .section-header h2 { font-size: 20px; font-weight: 700; }
+    .section-header .section-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .card h3 { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 12px; }
+    .card p  { font-size: 14px; color: var(--muted); margin-bottom: 8px; line-height: 1.7; }
+    .card p:last-child { margin-bottom: 0; }
+    .card ul, .card ol { color: var(--muted); padding-left: 22px; font-size: 14px; }
+    .card li { margin-bottom: 4px; }
+    .card li strong, .card p strong { color: var(--text); }
+    .card a { color: var(--blue); }
+
+    /* ── Inline code ── */
+    code:not([data-lang]):not(pre code) {
+      background: var(--surface2);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.9em;
+    }
+
+    /* ── Code block ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+      margin: 12px 0 16px;
+      font-size: 13px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+      line-height: 1.6;
+      position: relative;
+    }
+    pre code { color: var(--text); background: transparent; padding: 0; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .num-lit { color: #79c0ff; }
+    .type { color: #ffa657; }
+    :root[data-theme="light"] .kw  { color: #c2410c; }
+    :root[data-theme="light"] .fn  { color: #7c3aed; }
+    :root[data-theme="light"] .str { color: #0369a1; }
+    :root[data-theme="light"] .cmt { color: #64748b; }
+    :root[data-theme="light"] .num-lit { color: #0369a1; }
+    :root[data-theme="light"] .type { color: #b45309; }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    pre:hover .copy-btn { opacity: 1; }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Step list ── */
+    .step-list { list-style: none; counter-reset: steps; padding-left: 0; }
+    .step-list li {
+      counter-increment: steps;
+      display: flex; gap: 14px;
+      margin-bottom: 14px;
+    }
+    .step-list li::before {
+      content: counter(steps);
+      width: 24px; height: 24px; flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    .step-list li > div { flex: 1; }
+    .step-list li p { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
+    .step-list li strong { color: var(--text); }
+
+    /* ── Table ── */
+    .table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: rgba(88,166,255,0.1);
+      color: var(--blue);
+      padding: 10px 14px;
+      text-align: left;
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+    td {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: var(--row-alt); }
+    td code { font-size: 12px; color: var(--accent); background: rgba(95,207,128,0.1); padding: 1px 6px; border-radius: 4px; }
+    td strong { color: var(--text); }
+
+    /* ── Alert / note ── */
+    .note {
+      display: flex; gap: 12px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .note-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .note-info    { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); }
+    .note-success { background: rgba(95,207,128,0.08); border: 1px solid rgba(95,207,128,0.25); }
+    .note-warning { background: rgba(210,153,34,0.1);  border: 1px solid rgba(210,153,34,0.3); }
+    .note-danger  { background: rgba(255,123,114,0.1); border: 1px solid rgba(255,123,114,0.3); }
+    .note p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .note strong { color: var(--text); }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green  { background: rgba(63,185,80,0.18);  color: var(--green); }
+    .badge-yellow { background: rgba(210,153,34,0.18); color: var(--yellow); }
+    .badge-red    { background: rgba(255,123,114,0.18); color: var(--orange); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 960px) {
+      html { scroll-padding-top: 74px; }
+      .mobile-bar { display: flex; }
+      .desktop-theme-btn { display: none; }
+      .layout { display: block; min-height: calc(100vh - 58px); }
+      .sidebar {
+        position: fixed;
+        top: 58px;
+        left: min(-82vw, -320px);
+        z-index: 90;
+        width: min(82vw, 320px);
+        height: calc(100vh - 58px);
+        padding: 16px 0 24px;
+        transition: left 0.25s ease;
+      }
+      .sidebar.open { left: 0; }
+      .sidebar nav a { min-height: 44px; padding: 9px 20px; font-size: 14px; }
+      .main { max-width: none; width: 100%; padding: 22px 18px 48px; }
+      .hero { padding: 24px 22px; margin-bottom: 28px; }
+      .hero h1 { font-size: 22px; line-height: 1.35; overflow-wrap: anywhere; }
+      .section { margin-bottom: 40px; }
+      .section-header { align-items: flex-start; gap: 10px; margin-bottom: 18px; }
+      .section-header h2 { font-size: 18px; line-height: 1.4; }
+      .card, .flow { padding: 18px 16px; }
+      .flow-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .flow-arrow { display: none; }
+      .table-wrap { border: 1px solid var(--border); border-radius: 8px; }
+      table { min-width: 540px; }
+      pre { font-size: 12px; padding: 14px; }
+      .copy-btn { opacity: 1; }
+    }
+
+    @media (max-width: 520px) {
+      .mobile-title { font-size: 13px; }
+      .main { padding: 16px 12px 40px; }
+      .hero { padding: 20px 16px; border-radius: 10px; }
+      .hero h1 { font-size: 20px; }
+      .hero-meta { gap: 8px; }
+      .hero-tag { min-height: 26px; }
+      .section-header { display: grid; grid-template-columns: 32px minmax(0, 1fr); }
+      .card, .flow { border-radius: 8px; padding: 16px 14px; }
+      .flow-steps { grid-template-columns: 1fr; }
+      .note { padding: 13px 14px; }
+      pre { font-size: 11.5px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="mobile-bar">
+  <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="開啟選單" aria-expanded="false" aria-controls="siteSidebar">☰</button>
+  <div class="mobile-title">esg-fb · hermes .env 設定</div>
+  <button class="icon-btn theme-btn" id="themeBtn" type="button" aria-label="切換亮暗模式">☀️</button>
+</div>
+<button class="icon-btn theme-btn desktop-theme-btn" id="desktopThemeBtn" type="button" aria-label="切換亮暗模式">☀️</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="siteSidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">📘</div>
+      <div>
+        <div class="sidebar-logo-text">esg-fb</div>
+        <div class="sidebar-logo-sub">hermes agent .env 設定手冊</div>
+      </div>
+    </div>
+    <nav>
+      <div class="section-title">概覽</div>
+      <a href="#overview">📋 流程總覽</a>
+      <a href="#flow">🔄 端對端流程圖</a>
+
+      <div class="section-title">準備</div>
+      <a href="#prereq"><span class="step-num">1</span> 前置條件</a>
+      <a href="#fb-app"><span class="step-num">2</span> 建立 FB App</a>
+      <a href="#permissions"><span class="step-num">3</span> 設定權限</a>
+
+      <div class="section-title">執行</div>
+      <a href="#short-token"><span class="step-num">4</span> 取得 Short-Lived Token</a>
+      <a href="#run-setup"><span class="step-num">5</span> 執行 setup.py</a>
+      <a href="#deploy"><span class="step-num">6</span> 部署到 server</a>
+
+      <div class="section-title">維運</div>
+      <a href="#refresh">🔁 Token 更新</a>
+      <a href="#faq">🆘 排雷 FAQ</a>
+    </nav>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <h1>📘 FB App 設定流程</h1>
+      <p>建立 Facebook App、取得各種 token，最終用 <code>setup.py</code> 一鍵產出 hermes agent 需要的 <code>.env</code>。</p>
+      <div class="hero-meta">
+        <span class="hero-tag tag-green">setup.py 一鍵產出</span>
+        <span class="hero-tag tag-blue">Graph API v25.0</span>
+        <span class="hero-tag tag-blue">Python 3.7+</span>
+        <span class="hero-tag tag-orange">Long-Lived Token · 60 天</span>
+      </div>
+    </div>
+
+    <!-- Flow -->
+    <div class="flow" id="flow">
+      <h2>端對端流程</h2>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-step-icon icon-fb">🏗️</div>
+          <div class="flow-step-title">建立 FB App</div>
+          <div class="flow-step-label">取得 APP_ID<br>APP_SECRET</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon icon-token">🔑</div>
+          <div class="flow-step-title">Graph Explorer</div>
+          <div class="flow-step-label">勾權限<br>抓 Short-Lived Token</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon icon-script">⚙️</div>
+          <div class="flow-step-title">setup.py</div>
+          <div class="flow-step-label">換 Long-Lived Token<br>取 Page Token</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon icon-env">📄</div>
+          <div class="flow-step-title">.env 產出</div>
+          <div class="flow-step-label">5 個欄位<br>本機 / gitignored</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon icon-deploy">🚀</div>
+          <div class="flow-step-title">部署 server</div>
+          <div class="flow-step-label">hermes agent<br>啟動</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- .env 欄位摘要 -->
+    <div class="note note-info" style="margin-bottom:32px;">
+      <span class="note-icon">📑</span>
+      <p><strong>.env 內容一覽：</strong>共 5 個欄位，前 3 個是固定值（手動填），後 2 個由 <code>setup.py</code> 自動換取並寫入。</p>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>欄位</th><th>類型</th><th>來源</th><th>有效期</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FB_APP_ID</code></td><td>固定</td><td>FB 開發者後台</td><td>永久</td></tr>
+            <tr><td><code>FB_APP_SECRET</code></td><td>固定</td><td>FB 開發者後台</td><td>永久（可 reset）</td></tr>
+            <tr><td><code>FB_PAGE_ID</code></td><td>固定</td><td>FB 粉專關於頁</td><td>永久</td></tr>
+            <tr><td><code>FB_LONG_LIVED_USER_TOKEN</code></td><td>動態</td><td>setup.py 換取</td><td>60 天</td></tr>
+            <tr><td><code>FB_PAGE_ACCESS_TOKEN</code></td><td>動態</td><td>setup.py 換取</td><td>不過期 *</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size: 12px; margin-top: 8px;">* 必須由 long-lived user token 取得時才不過期；若由 short-lived 取得會跟著 user token 過期。</p>
+    </div>
+
+    <!-- ─── SECTION 1 · 前置條件 ─── -->
+    <section class="section" id="prereq">
+      <div class="section-header">
+        <div class="section-num num-blue">1</div>
+        <div>
+          <h2>前置條件</h2>
+          <div class="section-sub">執行 setup.py 前需要準備好的東西</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>環境檢查清單</h3>
+        <ul>
+          <li>有一個 <strong>Facebook 個人帳號</strong>，是要操作的粉專的 <em>管理員</em></li>
+          <li>該 FB 帳號已在 <a href="https://developers.facebook.com/" target="_blank">Meta for Developers</a> 註冊為開發者</li>
+          <li>本機有 <code>python3</code>（3.7+）</li>
+          <li>已 clone 本 repo，並切到專案目錄</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 2 · 建立 FB App ─── -->
+    <section class="section" id="fb-app">
+      <div class="section-header">
+        <div class="section-num num-orange">2</div>
+        <div>
+          <h2>建立 FB App</h2>
+          <div class="section-sub">在 Meta for Developers 後台建立 App，取得 APP_ID / APP_SECRET / PAGE_ID</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>建立 App 步驟</h3>
+        <ol class="step-list">
+          <li><div><p><strong>進入 My Apps</strong> → 點選 <a href="https://developers.facebook.com/apps/" target="_blank">developers.facebook.com/apps</a> → <strong>Create App</strong></p></div></li>
+          <li><div><p><strong>App type 選 <code>Business</code></strong></p></div></li>
+          <li><div><p><strong>填 App 名稱與聯絡 email</strong>（例如 <code>esg-hermes</code>）</p></div></li>
+          <li><div><p><strong>在 Settings → Basic 取得：</strong> <code>App ID</code> 與 <code>App Secret</code>（按 Show）</p></div></li>
+        </ol>
+      </div>
+
+      <div class="note note-info">
+        <span class="note-icon">📌</span>
+        <p><strong>FB_PAGE_ID 怎麼拿：</strong>到要操作的 FB 粉專 → 點 <em>關於 (About)</em> → 最下面有 <em>粉專編號 (Page ID)</em>。</p>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 3 · 權限 ─── -->
+    <section class="section" id="permissions">
+      <div class="section-header">
+        <div class="section-num num-purple">3</div>
+        <div>
+          <h2>設定權限</h2>
+          <div class="section-sub">hermes agent 需要的 FB API 權限與 App Review 狀態</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>需要的權限清單</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>權限</th><th>用途</th><th>需 App Review</th></tr></thead>
+            <tbody>
+              <tr><td><code>pages_show_list</code></td><td>列出可管理的粉專</td><td><span class="badge badge-green">否（開發階段）</span></td></tr>
+              <tr><td><code>pages_read_engagement</code></td><td>讀粉專互動資料</td><td><span class="badge badge-yellow">正式上線需要</span></td></tr>
+              <tr><td><code>pages_manage_posts</code></td><td>發文 / 編輯貼文</td><td><span class="badge badge-yellow">正式上線需要</span></td></tr>
+              <tr><td><code>pages_read_user_content</code></td><td>讀粉專留言 / 訊息</td><td><span class="badge badge-yellow">正式上線需要</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="note note-warning">
+        <span class="note-icon">⚠️</span>
+        <p><strong>開發 / 測試階段：</strong>App <em>還沒提交 App Review</em> 之前，只有 App 的 <code>Admins / Developers / Testers</code> 名單裡的 FB 帳號可以拿到這些權限。請先到 <code>App Roles</code> 把測試人員加進去。</p>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 4 · Short-Lived Token ─── -->
+    <section class="section" id="short-token">
+      <div class="section-header">
+        <div class="section-num num-green">4</div>
+        <div>
+          <h2>取得 Short-Lived User Token</h2>
+          <div class="section-sub">在 Graph API Explorer 抓一張 1~2 小時的暫時 token，馬上拿去跑 setup.py</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Graph Explorer 操作步驟</h3>
+        <ol class="step-list">
+          <li><div><p>進入 <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Graph API Explorer</a></p></div></li>
+          <li><div><p>右上 <strong>Meta App</strong> 切換到剛建立的 App</p></div></li>
+          <li><div><p><strong>User or Page</strong> 維持 <code>User Token</code></p></div></li>
+          <li><div><p><strong>Permissions</strong> 加入上一步表格中的權限</p></div></li>
+          <li><div><p>按 <code>Generate Access Token</code> → 跳轉 FB 同意視窗 → 允許</p></div></li>
+          <li><div><p>畫面上方的 <code>Access Token</code> 欄位就是 <strong>Short-Lived User Token</strong>（有效期僅 1~2 小時）</p></div></li>
+        </ol>
+      </div>
+
+      <div class="note note-danger">
+        <span class="note-icon">🚨</span>
+        <p><strong>不要把 Short-Lived Token 貼進 git commit：</strong>雖然 1~2 小時就會過期，但被洩漏的期間仍有 API 操作風險。</p>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 5 · 執行 setup.py ─── -->
+    <section class="section" id="run-setup">
+      <div class="section-header">
+        <div class="section-num num-red">5</div>
+        <div>
+          <h2>執行 setup.py</h2>
+          <div class="section-sub">一鍵：short-lived → long-lived → page token → 寫入 .env</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>互動模式（推薦）</h3>
+        <pre><code data-lang="plain">cd .claude/skills/facebook-page-setup
+python3 scripts/setup.py</code><button class="copy-btn" type="button">複製</button></pre>
+        <p>第一次跑會問你 4 個值，之後再跑會自動帶入既有 <code>.env</code>，只要貼新的 short-lived token 即可。範例輸出：</p>
+        <pre><code data-lang="plain">==================================================
+ FB App .env 設定工具
+==================================================
+FB_APP_ID: &lt;your_app_id&gt;
+FB_APP_SECRET [****...****]: (按 Enter 沿用)
+FB_PAGE_ID [&lt;your_page_id&gt;]: (按 Enter 沿用)
+
+請從 Graph API Explorer 取得 Short-Lived User Access Token
+  https://developers.facebook.com/tools/explorer/
+  選擇 App ID = &lt;your_app_id&gt;
+  權限: pages_show_list, pages_read_engagement, pages_manage_posts
+
+Short-Lived User Token: &lt;short_lived_token&gt;
+
+[1/2] 換取 Long-Lived User Access Token ...
+      OK  (****...****)
+[2/2] 取得 Page Access Token ...
+      OK  (****...****)
+
+.env 已寫入：~/.hermes/.env（權限 600，僅本人可讀）</code><button class="copy-btn" type="button">複製</button></pre>
+      </div>
+
+      <div class="card">
+        <h3>非互動模式（CI / Script 用）</h3>
+        <pre><code data-lang="plain">python3 scripts/setup.py \
+  --app-id &lt;your_app_id&gt; \
+  --app-secret &lt;your_app_secret&gt; \
+  --page-id &lt;your_page_id&gt; \
+  --token &lt;short_lived_token&gt;</code><button class="copy-btn" type="button">複製</button></pre>
+      </div>
+
+      <div class="card">
+        <h3>setup.py 內部做了什麼</h3>
+        <ol class="step-list">
+          <li><div><p><strong>呼叫 <code>/oauth/access_token</code></strong> with <code>grant_type=fb_exchange_token</code> → 把 short-lived 換成 long-lived user token</p></div></li>
+          <li><div><p><strong>計算 <code>appsecret_proof</code></strong> = HMAC-SHA256(access_token, app_secret)</p></div></li>
+          <li><div><p><strong>呼叫 <code>/me/accounts</code></strong>（帶上 long-lived token + appsecret_proof）→ 取得該帳號所有可管理粉專</p></div></li>
+          <li><div><p><strong>從清單找出符合 PAGE_ID 的</strong> page → 取出該 page 的 <code>access_token</code></p></div></li>
+          <li><div><p><strong>把 5 個欄位合併寫入 <code>~/.hermes/.env</code></strong>（保留既有其他 key，不覆蓋整檔；檔案權限設為 <code>600</code>）</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 6 · 部署 ─── -->
+    <section class="section" id="deploy">
+      <div class="section-header">
+        <div class="section-num num-blue">6</div>
+        <div>
+          <h2>部署到 server</h2>
+          <div class="section-sub">把 .env 放到 hermes agent 的工作目錄</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>產出的 .env 範例</h3>
+        <pre><code data-lang="plain">FB_APP_ID=&lt;your_app_id&gt;
+FB_APP_SECRET=&lt;your_app_secret&gt;
+FB_PAGE_ID=&lt;your_page_id&gt;
+FB_LONG_LIVED_USER_TOKEN=&lt;long_lived_token&gt;
+FB_PAGE_ACCESS_TOKEN=&lt;page_access_token&gt;
+FB_GRAPH_VERSION=v25.0</code><button class="copy-btn" type="button">複製</button></pre>
+      </div>
+
+      <div class="card">
+        <h3>SCP 直接送上 server</h3>
+        <pre><code data-lang="plain">scp .env user@your-hermes-server:/path/to/hermes/agent/</code><button class="copy-btn" type="button">複製</button></pre>
+      </div>
+
+      <div class="note note-success">
+        <span class="note-icon">✅</span>
+        <p><strong>正式環境建議：</strong>用 <em>secrets manager</em>（AWS SSM / Vault / Doppler）注入這幾個變數，不要把 <code>.env</code> 留在 server 檔案系統上。</p>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 7 · Token 更新 ─── -->
+    <section class="section" id="refresh">
+      <div class="section-header">
+        <div class="section-num num-yellow">7</div>
+        <div>
+          <h2>Token 更新</h2>
+          <div class="section-sub">long-lived user token 每 60 天要重抓一次</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token</th><th>有效期</th><th>更新方式</th></tr></thead>
+            <tbody>
+              <tr><td><code>FB_LONG_LIVED_USER_TOKEN</code></td><td>60 天</td><td>重跑 <code>setup.py</code> + 新的 short-lived token</td></tr>
+              <tr><td><code>FB_PAGE_ACCESS_TOKEN</code></td><td>不過期 *</td><td>同上（自動連帶更新）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 12px; margin-top: 8px;">* 雖然不過期，但若 user 改密碼 / 取消授權 / App 被 reset secret，就會失效。建議每 30~45 天主動更新一次。</p>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 8 · FAQ ─── -->
+    <section class="section" id="faq">
+      <div class="section-header">
+        <div class="section-num num-purple">8</div>
+        <div>
+          <h2>排雷 FAQ</h2>
+          <div class="section-sub">setup.py 報錯時對照</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>setup.py 報 <code>(#100) Invalid OAuth access token</code></h3>
+        <ul>
+          <li>Short-lived token 已過期（&gt; 1~2 小時）→ 重抓</li>
+          <li>token 是從錯的 App 抓的 → 確認 Graph Explorer 右上 App 設定</li>
+          <li>App Secret 填錯 → 對照 FB 後台</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>報 <code>找不到 Page ID xxx</code></h3>
+        <ul>
+          <li>該 FB 帳號不是該粉專的管理員 → 到粉專設定加管理員</li>
+          <li>Page ID 填錯 → 再次到粉專 → 關於頁確認</li>
+          <li>Graph Explorer 抓 token 時忘了勾 <code>pages_show_list</code> → 重抓</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>拿到的 Page Token 一下子就過期</h3>
+        <p>Page Token 的有效期會繼承來源 user token。一定要用 <strong>long-lived</strong> user token 去取 page token；<code>setup.py</code> 已經幫你處理這層，不要繞過去自己用 short-lived token 直接打 <code>/me/accounts</code>。</p>
+      </div>
+
+      <div class="card">
+        <h3>App Secret 不小心 push 到 GitHub 了</h3>
+        <ol class="step-list">
+          <li><div><p>立刻到 FB 開發者後台 → <strong>Settings → Basic → Reset</strong> App Secret</p></div></li>
+          <li><div><p>用新的 secret 重跑 <code>setup.py</code></p></div></li>
+          <li><div><p>更新 server 上的 <code>.env</code></p></div></li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>為什麼 setup.py 需要 appsecret_proof？</h3>
+        <p>FB 的「Require app secret」設定開啟時（建議開），所有 API 呼叫都必須附上 <code>appsecret_proof</code>（HMAC-SHA256 of access_token with app_secret as key），證明請求方真的握有 App Secret。<code>setup.py</code> 內部已自動計算並附上。</p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div style="border-top: 1px solid var(--border); padding-top: 24px; margin-top: 16px;">
+      <p style="color: var(--muted); font-size: 13px;">
+        <strong>esg-fb</strong> · hermes agent token 設定工具 · 流程整合於 <code>setup.py</code> ·
+        <span style="color: var(--accent);">深淺色模式右上角切換</span>
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  /* ── Theme toggle ── */
+  const themeButtons = [document.getElementById('themeBtn'), document.getElementById('desktopThemeBtn')].filter(Boolean);
+  const THEME_KEY = 'esg-fb-theme';
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if (savedTheme === 'light') document.documentElement.dataset.theme = 'light';
+  function syncThemeButtons() {
+    const isLight = document.documentElement.dataset.theme === 'light';
+    themeButtons.forEach(btn => { btn.textContent = isLight ? '🌙' : '☀️'; });
+  }
+  function toggleTheme() {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem(THEME_KEY, next);
+    syncThemeButtons();
+  }
+  themeButtons.forEach(btn => btn.addEventListener('click', toggleTheme));
+  syncThemeButtons();
+
+  /* ── Sidebar (mobile) ── */
+  const sidebar = document.getElementById('siteSidebar');
+  const menuBtn = document.getElementById('menuBtn');
+  const overlay = document.getElementById('sidebarOverlay');
+  function setSidebarOpen(open) {
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('open', open);
+    document.body.classList.toggle('nav-open', open);
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  menuBtn.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('open')));
+  overlay.addEventListener('click', () => setSidebarOpen(false));
+
+  /* ── Scroll spy ── */
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const links = document.querySelectorAll('.sidebar nav a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`.sidebar nav a[href="#${e.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+  links.forEach(link => link.addEventListener('click', () => {
+    if (window.innerWidth <= 960) setSidebarOpen(false);
+  }));
+
+  /* ── Copy buttons ── */
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pre = btn.closest('pre');
+      const code = pre.querySelector('code');
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code.textContent);
+        btn.textContent = '已複製';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '複製'; btn.classList.remove('copied'); }, 1500);
+      } catch (err) {
+        btn.textContent = '失敗';
+        setTimeout(() => { btn.textContent = '複製'; }, 1500);
+      }
+    });
+  });
+</script>
+</body>
+</html>

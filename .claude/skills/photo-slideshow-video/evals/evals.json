@@ -1,0 +1,35 @@
+{
+  "skill_name": "photo-slideshow-video",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我剛上傳了 12 張旅遊照片，想做成 Facebook 一般貼文，不要裁太多，配樂用這個 YouTube 連結，做可愛一點。",
+      "expected_output": "Should inspect/mention source aspect ratio, recommend/render 4:5 1080x1350, use uploaded images directly, download/add music with yt-dlp, verify final MP4."
+    },
+    {
+      "id": 2,
+      "prompt": "把這個資料夾的直式照片做成 YouTube 橫式 16:9 影片，但不要把人跟動物裁掉。",
+      "expected_output": "Should avoid full-bleed crop, use blurred-background plus centered full photo via make_yt_16x9_blurred_slideshow.sh, add motion/music if requested, verify output."
+    },
+    {
+      "id": 3,
+      "prompt": "這支照片影片看起來被壓到，是不是照片尺寸跟影片比例不一樣？幫我改成適合 FB 的版本。",
+      "expected_output": "Should explain aspect-ratio/crop mismatch, inspect dimensions, choose Facebook feed 4:5, rerender rather than only explain."
+    },
+    {
+      "id": 4,
+      "prompt": "我有 12 張照片跟 4 段手機短片，想合成一支 4:5 的 FB 影片，影片片段就照原長度播、原音也保留，背景音樂自動壓低就好。",
+      "expected_output": "Should detect mixed inputs via ffprobe, keep original video duration and audio, normalize fps=24 and SAR before concat, apply sidechain ducking on background music, verify final mp4 via make_mixed_media_slideshow.sh."
+    },
+    {
+      "id": 5,
+      "prompt": "這支影片我已經有 SRT 字幕檔了，幫我燒進去，繁體中文。",
+      "expected_output": "Should validate libass availability, auto-convert SRT to UTF-8 (handling Big5/UTF-16/BOM), burn with PingFang TC styling via burn_srt_subtitles.sh, exit cleanly with install hint if libass missing."
+    },
+    {
+      "id": 6,
+      "prompt": "我做出來的影片有幾張照片是躺著的，明明在手機看是正的。",
+      "expected_output": "Should explain EXIF orientation issue (ffmpeg transpose does not read EXIF), preprocess with ImageOps.exif_transpose, rerender without expecting user to manually rotate."
+    }
+  ]
+}
